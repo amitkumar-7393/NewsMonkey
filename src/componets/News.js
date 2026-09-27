@@ -7,7 +7,6 @@ const News = (props) => {
   const [articles, setArticles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
-  const [setTotalResults] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const [progress, setProgress] = useState(30);
   const [error, setError] = useState(null);
@@ -83,7 +82,6 @@ const News = (props) => {
         );
 
         setPage(pageNumber);
-        setTotalResults(total);
         setProgress(100);
 
         setHasMore(
@@ -146,7 +144,6 @@ const News = (props) => {
     setArticles([]);
     setLoading(true);
     setPage(1);
-    setTotalResults(0);
     setHasMore(true);
     setProgress(30);
     setError(null);
@@ -164,6 +161,7 @@ const News = (props) => {
 
   return (
     <div>
+      {/* YouTube Style Loading Bar */}
       {loading && (
         <div
           style={{
@@ -189,6 +187,7 @@ const News = (props) => {
       )}
 
       <div className="container my-3">
+        {/* Heading */}
         <h1
           className="text-center"
           style={{
@@ -199,18 +198,24 @@ const News = (props) => {
           NewsMonkey - Top {capitalizeFirstLetter(props.category)} Headlines
         </h1>
 
+        {/* API Error */}
         {error && (
           <div className="alert alert-danger text-center" role="alert">
             <strong>Unable to load news</strong>
+
             <br />
+
             {error}
+
             <br />
+
             <small>
               Please check your API key, NewsAPI limit, or internet connection.
             </small>
           </div>
         )}
 
+        {/* News Articles */}
         <div className="row">
           {articles.map((element, index) => (
             <div
@@ -230,6 +235,7 @@ const News = (props) => {
           ))}
         </div>
 
+        {/* Spinner */}
         {loading && (
           <div
             className="d-flex justify-content-center align-items-center"
@@ -242,6 +248,7 @@ const News = (props) => {
           </div>
         )}
 
+        {/* End of News */}
         {!loading && !hasMore && !error && articles.length > 0 && (
           <div className="text-center my-4">
             <p className="text-muted">You have reached the end of the news.</p>
