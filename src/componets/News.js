@@ -7,7 +7,7 @@ const News = (props) => {
   const [articles, setArticles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
-  const [totalResults, setTotalResults] = useState(0);
+  const [setTotalResults] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const [progress, setProgress] = useState(30);
   const [error, setError] = useState(null);
