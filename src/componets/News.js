@@ -19,6 +19,21 @@ const News = (props) => {
     return str.charAt(0).toUpperCase() + str.slice(1);
   };
 
+  // Currents API category mapping
+  const getCategory = (category) => {
+    const categoryMap = {
+      general: "general",
+      business: "business",
+      entertainment: "entertainment",
+      health: "health",
+      science: "science",
+      sports: "sports",
+      technology: "technology",
+    };
+
+    return categoryMap[category] || "general";
+  };
+
   const fetchNews = useCallback(
     async (pageNumber) => {
       if (isFetching.current) {
@@ -32,19 +47,21 @@ const News = (props) => {
       setError(null);
 
       try {
-        const apiKey = process.env.REACT_APP_NEWS_API_KEY;
+        const apiKey = process.env.REACT_APP_CURRENTS_API_KEY;
 
         if (!apiKey) {
-          throw new Error("API key not found. Check your .env file.");
+          throw new Error("Currents API key not found. Check your .env file.");
         }
 
+        const category = getCategory(props.category);
+
         const url =
-          `https://newsapi.org/v2/top-headlines` +
-          `?country=${props.country}` +
-          `&category=${props.category}` +
-          `&apiKey=${apiKey}` +
-          `&page=${pageNumber}` +
-          `&pageSize=${props.pageSize}`;
+          `https://api.currentsapi.services/v1/latest-news` +
+          `?language=en` +
+          `&country=${props.country.toUpperCase()}` +
+          `&category=${category}` +
+          `&page_number=${pageNumber}` +
+          `&page_size=${props.pageSize}`;
 
         setTimeout(() => {
           if (isFetching.current) {
@@ -52,16 +69,22 @@ const News = (props) => {
           }
         }, 300);
 
-        const response = await fetch(url);
+        const response = await fetch(url, {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${apiKey}`,
+          },
+        });
 
         const data = await response.json();
 
-        console.log("NewsAPI Response:", data);
+        console.log("Currents API Response:", data);
 
-        if (data.status !== "ok") {
-          const apiMessage = data.message || "Unable to fetch news.";
+        if (!response.ok || data.status !== "ok") {
+          const apiMessage =
+            data.msg || data.message || "Unable to fetch news.";
 
-          console.error("NewsAPI Error:", apiMessage);
+          console.error("Currents API Error:", apiMessage);
 
           setLoading(false);
           setProgress(100);
@@ -72,8 +95,17 @@ const News = (props) => {
           return;
         }
 
-        const newArticles = data.articles || [];
-        const total = data.totalResults || 0;
+        const newArticles = (data.news || []).map((article) => ({
+          title: article.title,
+          description: article.description,
+          url: article.url,
+          urlToImage: article.image,
+          author: article.author,
+          publishedAt: article.published,
+          source: {
+            name: "Currents",
+          },
+        }));
 
         setArticles((previousArticles) =>
           pageNumber === 1
@@ -84,9 +116,9 @@ const News = (props) => {
         setPage(pageNumber);
         setProgress(100);
 
-        setHasMore(
-          newArticles.length > 0 && pageNumber * props.pageSize < total,
-        );
+        // If API returns less articles than requested,
+        // assume there are no more articles.
+        setHasMore(newArticles.length >= props.pageSize);
 
         setError(null);
 
@@ -98,7 +130,9 @@ const News = (props) => {
 
         setLoading(false);
         setProgress(100);
+
         setError(err.message || "Failed to fetch news.");
+
         setHasMore(false);
       }
 
@@ -161,7 +195,7 @@ const News = (props) => {
 
   return (
     <div>
-      {/* YouTube Style Loading Bar */}
+      {/* Top Progress Bar */}
       {loading && (
         <div
           style={{
@@ -198,7 +232,7 @@ const News = (props) => {
           NewsMonkey - Top {capitalizeFirstLetter(props.category)} Headlines
         </h1>
 
-        {/* API Error */}
+        {/* Error */}
         {error && (
           <div className="alert alert-danger text-center" role="alert">
             <strong>Unable to load news</strong>
@@ -210,12 +244,13 @@ const News = (props) => {
             <br />
 
             <small>
-              Please check your API key, NewsAPI limit, or internet connection.
+              Please check your Currents API key, API limit, or internet
+              connection.
             </small>
           </div>
         )}
 
-        {/* News Articles */}
+        {/* News Cards */}
         <div className="row">
           {articles.map((element, index) => (
             <div
@@ -229,7 +264,7 @@ const News = (props) => {
                 newsUrl={element.url}
                 author={element.author}
                 date={element.publishedAt}
-                source={element.source?.name || ""}
+                source={element.source?.name || "Currents"}
               />
             </div>
           ))}
@@ -248,7 +283,7 @@ const News = (props) => {
           </div>
         )}
 
-        {/* End of News */}
+        {/* End Message */}
         {!loading && !hasMore && !error && articles.length > 0 && (
           <div className="text-center my-4">
             <p className="text-muted">You have reached the end of the news.</p>
